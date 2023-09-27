@@ -34,6 +34,12 @@ struct Metadata{
 
 } Metadata;
 
+struct RegistroGenerico
+{
+    char ** campos;
+} RegistroGenerico;
+
+int cantidadDeCampos;
 
 void CargarMetaData(){
     struct Metadata nuevaData;
@@ -58,29 +64,6 @@ void CargarMetaData(){
     return;
 }
 
-
-
-
-void menu()
-{
-    printf("\n");
-    printf("  ============================================================================\n");
-    printf(" |                                 ABM Generico                                |\n");
-    printf("  ============================================================================\n");
-    printf("\n");
-    printf("  1   Establecer estructura\n");
-    printf("  2   Mostrar Estructura\n");
-    printf("  3   Dar de alta\n");
-    printf("  4   Dar de baja\n");
-    printf("  5   Modificar\n");
-    printf("\n");
-    printf("  0   Salir\n");
-    printf("\n");
-    printf(" ------------------------------------------------------------------------------\n");
-    printf("\n");
-    printf("  Por favor seleccione una opción: ");
-}
-
 void alta_Estructura(){
     limpiar_pantalla();
     FILE *metadata = fopen("Campos.dat","ab+");
@@ -100,6 +83,7 @@ void alta_Estructura(){
         for(int i =0;i<cantidad;i++){
             CargarMetaData();
         }
+        cantidadDeCampos = cantidad;
     }
     pausa();
     return;
@@ -137,20 +121,86 @@ void main_mostrar_estructura(){
     return;
 }
 
-void main_alta(){
+//---------------------------------------------ALTAS------------------------------------------------------
 
+void inicializarRegistro(struct RegistroGenerico *registro)
+{
+    registro->campos = (char **)calloc(cantidadDeCampos, sizeof(char *));
+}
+
+void mostrar_archivo_datos(){
+    limpiar_pantalla();
+    FILE *archivo = fopen("Datos.dat", "r+b");
+    struct RegistroGenerico registro;
+    if (archivo == NULL)
+    {
+        printf("No se pudo abrir el archivo");
+    } else {
+        printf("Contenido del archivo de datos: \n");
+        fseek(archivo,0,SEEK_SET);
+        while(fread(&registro,sizeof(struct RegistroGenerico),1,archivo) == 1){
+            for (int i = 0; i < cantidadDeCampos; i++)
+            if (registro.campos[i] != NULL)
+            {
+                printf("%s", &registro.campos[i]);
+            }
+        }
+    }
+    fclose(archivo);
+    pausa();
+    return;
+}
+
+void main_alta(){
     FILE *metadata = fopen("Campos.dat", "r+b");
+    FILE *archivo = fopen("Datos.dat", "a+b");
     struct Metadata datos;
+    struct RegistroGenerico registro;
+    inicializarRegistro(&registro);
+    int i = 0;
     //Deberia recorrer todo el archivo y por cada campo pedir que ingresen los datos
     while (fread(&datos, sizeof(struct Metadata), 1, metadata) == 1)
     {
         printf("Ingrese %s :",datos.campo);
-        int i = datos.longitud;
-        char valorDelCampo[i];
-        fgets(valorDelCampo,i,stdin);
-        //Aca es donde necesito ayuda
+        int longitud = datos.longitud;
+        char valorDelCampo[longitud];
+        fgets(valorDelCampo,longitud,stdin);
+        printf("\n");
+        registro.campos[i] = strdup(valorDelCampo);
+        i++;
     }
-    fclose(metadata);
+    //free(&registro);
+    fseek(archivo, 0, SEEK_END);
+    for (int i = 0; i < cantidadDeCampos; i++)
+    {
+        if (registro.campos[i] != NULL)
+        {
+            fwrite(registro.campos[i], 1, strlen(registro.campos[i]), archivo);
+        }
+    }
+    //fwrite(&registro, sizeof(struct RegistroGenerico), 1, archivo);
+    fclose(archivo);
+    mostrar_archivo_datos();
+}
+// -----------------------------------------MENU Y MAIN---------------------------------------------------
+void menu()
+{
+    printf("\n");
+    printf("  ============================================================================\n");
+    printf(" |                                 ABM Generico                                |\n");
+    printf("  ============================================================================\n");
+    printf("\n");
+    printf("  1   Establecer estructura\n");
+    printf("  2   Mostrar Estructura\n");
+    printf("  3   Dar de alta\n");
+    printf("  4   Dar de baja\n");
+    printf("  5   Modificar\n");
+    printf("\n");
+    printf("  0   Salir\n");
+    printf("\n");
+    printf(" ------------------------------------------------------------------------------\n");
+    printf("\n");
+    printf("  Por favor seleccione una opción: ");
 }
 
 void main()
