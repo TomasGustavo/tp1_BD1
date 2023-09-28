@@ -142,7 +142,7 @@ void mostrar_archivo_datos(){
             for (int i = 0; i < cantidadDeCampos; i++)
             if (registro.campos[i] != NULL)
             {
-                printf("%s", &registro.campos[i]);
+                printf("%s", registro.campos[i]);
             }
         }
     }
@@ -205,6 +205,15 @@ void menu()
 
 void main()
 {
+    FILE *campos = fopen("Campos.dat", "r+b");
+    struct Metadata datos;
+    fseek(campos,0,SEEK_SET);
+    int i = 0;
+    while(fread(&datos,sizeof(struct Metadata),1,campos) == 1){
+         i++;     
+    }
+    cantidadDeCampos = i;
+    fclose(campos);
     bool salir = false;
     int opcion;
     bool generoEstructura = false;
