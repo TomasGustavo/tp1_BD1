@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#define MAX_CAMPOS 10
+#define MAX_LONGITUD 34
+
+
 
 // -------------------------------- FUNCIONES UTILES --------------------------------------
 void pausa()
@@ -36,8 +40,8 @@ struct Metadata{
 
 struct RegistroGenerico
 {
-    char ** campos;
-} RegistroGenerico;
+    char campos[MAX_CAMPOS][MAX_LONGITUD];
+};
 
 int cantidadDeCampos;
 
@@ -72,9 +76,9 @@ void alta_Estructura(){
         return;
     }
     fseek(metadata, 0, SEEK_END);
-    long tamaño = ftell(metadata);
+    long tamanio = ftell(metadata);
     fclose(metadata);
-    if (tamaño != 0){
+    if (tamanio != 0){
         printf("La estructura ya fue generada");
     } else {
         int cantidad;
@@ -97,9 +101,9 @@ void main_mostrar_estructura(){
         return;
     }
     fseek(metadata, 0, SEEK_END);
-    long tamaño = ftell(metadata);
+    long tamanio = ftell(metadata);
     fclose(metadata);
-    if (tamaño == 0){
+    if (tamanio == 0){
         printf("La estructura aun no fue generada");
     } else {
         FILE *campos = fopen("Campos.dat", "r+b");
@@ -122,16 +126,29 @@ void main_mostrar_estructura(){
 }
 
 //---------------------------------------------ALTAS------------------------------------------------------
-
+/*
 void inicializarRegistro(struct RegistroGenerico *registro)
 {
-    registro->campos = (char **)calloc(cantidadDeCampos, sizeof(char *));
+    registro->campos = (char **)calloc(cantidadDeCampos,sizeof(char));
+    for(int i =0; i<cantidadDeCampos;i++){
+        registro->campos[i] = NULL;
+    }
+    registro->cantidadDeCampos = 0;
+
+}*/
+
+void liberarRegistro(struct RegistroGenerico *registro){
+
+    for(int i =0; i<cantidadDeCampos;i++){
+        free(registro->campos[i]);
+    }
 }
 
 void mostrar_archivo_datos(){
     limpiar_pantalla();
     FILE *archivo = fopen("Datos.dat", "r+b");
     struct RegistroGenerico registro;
+    //inicializarRegistro(&registro);
     if (archivo == NULL)
     {
         printf("No se pudo abrir el archivo");
@@ -139,11 +156,13 @@ void mostrar_archivo_datos(){
         printf("Contenido del archivo de datos: \n");
         fseek(archivo,0,SEEK_SET);
         while(fread(&registro,sizeof(struct RegistroGenerico),1,archivo) == 1){
-            for (int i = 0; i < cantidadDeCampos; i++)
-            if (registro.campos[i] != NULL)
-            {
+            for (int i = 0; i < cantidadDeCampos; i++){
+                
                 printf("%s", registro.campos[i]);
+                printf("\n");
             }
+            printf("\n----------------------------\n");
+            
         }
     }
     fclose(archivo);
@@ -156,28 +175,30 @@ void main_alta(){
     FILE *archivo = fopen("Datos.dat", "a+b");
     struct Metadata datos;
     struct RegistroGenerico registro;
-    inicializarRegistro(&registro);
+    //inicializarRegistro(&registro);
     int i = 0;
     //Deberia recorrer todo el archivo y por cada campo pedir que ingresen los datos
     while (fread(&datos, sizeof(struct Metadata), 1, metadata) == 1)
     {
         printf("Ingrese %s :",datos.campo);
         int longitud = datos.longitud;
-        char valorDelCampo[longitud];
-        fgets(valorDelCampo,longitud,stdin);
-        printf("\n");
-        registro.campos[i] = strdup(valorDelCampo);
+        if (longitud > MAX_LONGITUD) {
+            printf("La longitud del campo es demasiado grande.\n");
+            continue;
+        }
+
+        fgets(registro.campos[i], longitud, stdin);
+        // Elimina el carácter de nueva línea del final de la cadena
+        registro.campos[i][strcspn(registro.campos[i], "\n")] = '\0';
         i++;
     }
+
+    
+
     //free(&registro);
     fseek(archivo, 0, SEEK_END);
-    for (int i = 0; i < cantidadDeCampos; i++)
-    {
-        if (registro.campos[i] != NULL)
-        {
-            fwrite(registro.campos[i], 1, strlen(registro.campos[i]), archivo);
-        }
-    }
+    fwrite(&registro,sizeof(struct RegistroGenerico),1,archivo);
+    
     //fwrite(&registro, sizeof(struct RegistroGenerico), 1, archivo);
     fclose(archivo);
     mostrar_archivo_datos();
