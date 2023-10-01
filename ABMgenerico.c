@@ -68,6 +68,11 @@ void CargarMetaData(){
     return;
 }
 
+void vaciar_metadata(){
+    FILE *archivo = fopen("Campos.dat","w");
+    fclose(archivo);
+}
+
 void alta_Estructura(){
     limpiar_pantalla();
     FILE *metadata = fopen("Campos.dat","ab+");
@@ -177,7 +182,7 @@ void main_alta(){
     struct RegistroGenerico registro;
     //inicializarRegistro(&registro);
     int i = 0;
-    //Deberia recorrer todo el archivo y por cada campo pedir que ingresen los datos
+    
     while (fread(&datos, sizeof(struct Metadata), 1, metadata) == 1)
     {
         printf("Ingrese %s :",datos.campo);
@@ -203,6 +208,39 @@ void main_alta(){
     fclose(archivo);
     mostrar_archivo_datos();
 }
+
+void main_baja(){
+    int indice;
+    printf("indique numero de registro a modificar: \n");
+    scanf("%d",&indice);
+    
+    FILE *archivo = fopen("Datos.dat", "r+b");
+
+    fseek(archivo,sizeof(struct RegistroGenerico)*indice,SEEK_SET);
+
+    struct RegistroGenerico registroEliminado;
+    memset(&registroEliminado,0,sizeof(struct RegistroGenerico));
+    fwrite(&registroEliminado,sizeof(struct RegistroGenerico),1,archivo);
+
+    fseek(archivo,0,SEEK_END);
+}
+
+void main_modificar(){
+    int indice;
+    FILE *archivo = fopen("Datos.dat","r+b");
+    printf("indique numero de registro a modificar: \n");
+    scanf("%d",&indice);
+
+    struct RegistroGenerico nuevoRegistro;
+    for(int i =0; i< cantidadDeCampos;i++){
+        printf("Campo %d (%s)",i+1,nuevoRegistro.campos[i]);
+        fgets(nuevoRegistro.campos,34,stdin);
+    }
+
+    fseek(archivo,sizeof(struct RegistroGenerico)*indice,SEEK_SET);
+
+    fwrite(&nuevoRegistro,sizeof(struct RegistroGenerico),1,archivo);
+}
 // -----------------------------------------MENU Y MAIN---------------------------------------------------
 void menu()
 {
@@ -213,9 +251,10 @@ void menu()
     printf("\n");
     printf("  1   Establecer estructura\n");
     printf("  2   Mostrar Estructura\n");
-    printf("  3   Dar de alta\n");
-    printf("  4   Dar de baja\n");
-    printf("  5   Modificar\n");
+    printf("  3   BORRAR ESTRUCTURA\n");
+    printf("  4   Dar de alta\n");
+    printf("  5   Dar de baja\n");
+    printf("  6   Modificar\n");
     printf("\n");
     printf("  0   Salir\n");
     printf("\n");
@@ -244,7 +283,7 @@ void main()
         menu();
         int validador = scanf("%i", &opcion);
         vaciar_buffer();
-        while (validador != 1 || opcion < 0 || opcion > 5)
+        while (validador != 1 || opcion < 0 || opcion > 6)
         {
             printf("Opción incorrecta\n" );
             printf( "  Por favor seleccione una opción: " );
@@ -260,13 +299,16 @@ void main()
             main_mostrar_estructura();
             break;
         case 3:
-            main_alta();
+            vaciar_metadata();
             break;
         case 4:
-            //main_baja();
+            main_alta();
             break;
         case 5:
-            //main_modificar();
+            main_baja();
+            break;
+        case 6:
+            main_modificar();
             break;
         case 0:
             salir = true;
