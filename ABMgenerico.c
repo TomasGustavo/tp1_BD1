@@ -71,6 +71,7 @@ void CargarMetaData(){
 void vaciar_metadata(){
     FILE *archivo = fopen("Campos.dat","w");
     fclose(archivo);
+    cantidadDeCampos = 0;
 }
 
 void alta_Estructura(){
@@ -153,6 +154,7 @@ void mostrar_archivo_datos(){
     limpiar_pantalla();
     FILE *archivo = fopen("Datos.dat", "r+b");
     struct RegistroGenerico registro;
+    int i = 1;
     //inicializarRegistro(&registro);
     if (archivo == NULL)
     {
@@ -161,13 +163,14 @@ void mostrar_archivo_datos(){
         printf("Contenido del archivo de datos: \n");
         fseek(archivo,0,SEEK_SET);
         while(fread(&registro,sizeof(struct RegistroGenerico),1,archivo) == 1){
+            printf("%i\n", i);
             for (int i = 0; i < cantidadDeCampos; i++){
                 
                 printf("%s", registro.campos[i]);
                 printf("\n");
             }
             printf("\n----------------------------\n");
-            
+            i++;
         }
     }
     fclose(archivo);
@@ -185,7 +188,7 @@ void main_alta(){
     
     while (fread(&datos, sizeof(struct Metadata), 1, metadata) == 1)
     {
-        printf("Ingrese %s :",datos.campo);
+        printf("Ingrese %s: ",datos.campo);
         int longitud = datos.longitud;
         if (longitud > MAX_LONGITUD) {
             printf("La longitud del campo es demasiado grande.\n");
@@ -211,35 +214,50 @@ void main_alta(){
 
 void main_baja(){
     int indice;
-    printf("indique numero de registro a modificar: \n");
+    printf("Indique numero de registro que quiere dar de baja: \n");
     scanf("%d",&indice);
     
     FILE *archivo = fopen("Datos.dat", "r+b");
 
-    fseek(archivo,sizeof(struct RegistroGenerico)*indice,SEEK_SET);
+    fseek(archivo,sizeof(struct RegistroGenerico)*(indice-1),SEEK_SET);
 
     struct RegistroGenerico registroEliminado;
     memset(&registroEliminado,0,sizeof(struct RegistroGenerico));
     fwrite(&registroEliminado,sizeof(struct RegistroGenerico),1,archivo);
 
     fseek(archivo,0,SEEK_END);
+    fclose(archivo);
+    printf("Se dio de baja el registro de la posicion %i", indice);
+    pausa();
+    return;
 }
 
 void main_modificar(){
     int indice;
+    int nroCampo;
     FILE *archivo = fopen("Datos.dat","r+b");
-    printf("indique numero de registro a modificar: \n");
+    printf("Indique numero de registro a modificar: ");
     scanf("%d",&indice);
 
     struct RegistroGenerico nuevoRegistro;
+    fseek(archivo,sizeof(struct RegistroGenerico)*(indice-1),SEEK_SET);
+    fread(&nuevoRegistro,sizeof(struct RegistroGenerico),1,archivo);
     for(int i =0; i< cantidadDeCampos;i++){
-        printf("Campo %d (%s)",i+1,nuevoRegistro.campos[i]);
-        fgets(nuevoRegistro.campos,34,stdin);
+        printf("Campo %d: %s\n",i+1,nuevoRegistro.campos[i]);
     }
+    printf("\nIndique el numero de campo a modificar: ");
+    scanf("%i",&nroCampo);
+    vaciar_buffer();
+    printf("\nIngrese el nuevo valor del campo %i: ", nroCampo);
+    fgets(nuevoRegistro.campos[nroCampo-1],34, stdin);
+    nuevoRegistro.campos[nroCampo-1][strcspn(nuevoRegistro.campos[nroCampo-1], "\n")] = '\0';
 
-    fseek(archivo,sizeof(struct RegistroGenerico)*indice,SEEK_SET);
-
+    fseek(archivo,sizeof(struct RegistroGenerico)*(indice-1),SEEK_SET);
     fwrite(&nuevoRegistro,sizeof(struct RegistroGenerico),1,archivo);
+    fclose(archivo);
+    printf("Se ha modificado el campo correctamente");
+    pausa();
+    return;
 }
 // -----------------------------------------MENU Y MAIN---------------------------------------------------
 void menu()
@@ -255,6 +273,7 @@ void menu()
     printf("  4   Dar de alta\n");
     printf("  5   Dar de baja\n");
     printf("  6   Modificar\n");
+    printf("  7   Ver archivo\n");
     printf("\n");
     printf("  0   Salir\n");
     printf("\n");
@@ -283,7 +302,7 @@ void main()
         menu();
         int validador = scanf("%i", &opcion);
         vaciar_buffer();
-        while (validador != 1 || opcion < 0 || opcion > 6)
+        while (validador != 1 || opcion < 0 || opcion > 7)
         {
             printf("Opción incorrecta\n" );
             printf( "  Por favor seleccione una opción: " );
@@ -309,6 +328,9 @@ void main()
             break;
         case 6:
             main_modificar();
+            break;
+        case 7:
+            mostrar_archivo_datos();
             break;
         case 0:
             salir = true;
