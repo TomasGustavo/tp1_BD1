@@ -33,7 +33,6 @@ void limpiar_pantalla()
 struct Metadata{
     
     char campo[32];
-    //char tipo;
     int longitud;
 
 } Metadata;
@@ -56,8 +55,7 @@ void CargarMetaData(){
         printf("Ingrese el nombre que recibirá el campo: ");
         scanf("%s",&nuevaData.campo);
 
-        // printf("ingrese de que tipo sera el campo (int - char - float, etc.) solo con un caracter: ");
-        //scanf("%c",&nuevaData.tipo);
+        
     
         printf("ingrese la longitud del campo: ");
         scanf("%d",&nuevaData.longitud);
@@ -132,16 +130,6 @@ void main_mostrar_estructura(){
 }
 
 //---------------------------------------------ALTAS------------------------------------------------------
-/*
-void inicializarRegistro(struct RegistroGenerico *registro)
-{
-    registro->campos = (char **)calloc(cantidadDeCampos,sizeof(char));
-    for(int i =0; i<cantidadDeCampos;i++){
-        registro->campos[i] = NULL;
-    }
-    registro->cantidadDeCampos = 0;
-
-}*/
 
 void liberarRegistro(struct RegistroGenerico *registro){
 
@@ -183,7 +171,7 @@ void main_alta(){
     FILE *archivo = fopen("Datos.dat", "a+b");
     struct Metadata datos;
     struct RegistroGenerico registro;
-    //inicializarRegistro(&registro);
+    
     int i = 0;
     
     while (fread(&datos, sizeof(struct Metadata), 1, metadata) == 1)
@@ -203,11 +191,9 @@ void main_alta(){
 
     
 
-    //free(&registro);
     fseek(archivo, 0, SEEK_END);
     fwrite(&registro,sizeof(struct RegistroGenerico),1,archivo);
     
-    //fwrite(&registro, sizeof(struct RegistroGenerico), 1, archivo);
     fclose(archivo);
     mostrar_archivo_datos();
 }
@@ -227,6 +213,7 @@ void main_baja(){
 
     fseek(archivo,0,SEEK_END);
     fclose(archivo);
+    pausa();
     printf("Se dio de baja el registro de la posicion %i", indice);
     pausa();
     return;
